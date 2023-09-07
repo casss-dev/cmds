@@ -9,7 +9,7 @@ import Foundation
 import ANSITerminal
 
 /// A picker that returns a single option
-public struct Pick<Option: RawRepresentable>: Picker where Option.RawValue == String, Option: Hashable {
+public struct Pick<Option: StringProtocol>: Picker {
 
     public var prompt: String
     public var options: [Option]

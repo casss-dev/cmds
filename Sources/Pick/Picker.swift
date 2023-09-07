@@ -41,7 +41,7 @@ public struct PickerOptionExtras {
 
 /// The common interface for a pick
 public protocol Picker {
-    associatedtype Option: RawRepresentable, Hashable where Option.RawValue == String
+    associatedtype Option: StringProtocol
     typealias Extras<Option> = [Option: PickerOptionExtras] where Option: Hashable
     typealias Validate<Option> = (_ selected: [Option]) -> String?
 
@@ -103,18 +103,18 @@ public protocol Picker {
 
 public extension Picker {
 
-    init(_ pickable: Option.Type, activeOption: Option? = nil) where Option: Pickable {
+    init<T>(_ pickable: T.Type, activeOption: Option? = nil) where T: Pickable, Option == String {
         precondition(!pickable.allCases.isEmpty, "Must provide at least one option")
         self.init(
             prompt: pickable.prompt,
-            options: pickable.allCases as! [Option],
+            options: pickable.allCases.map(\.description),
             activeOption: activeOption
         )
-        extras = (pickable.allCases as! [Option]).reduce(into: Extras(), {
-            $0[$1] = PickerOptionExtras(prefix: $1.prefix, suffix: $1.suffix)
+        extras = (pickable.allCases).reduce(into: Extras(), {
+            $0[$1.description] = PickerOptionExtras(prefix: $1.prefix, suffix: $1.suffix)
         })
-        let activeOption = activeOption ?? pickable.allCases.first!
-        if let i = options.firstIndex(of: activeOption) {
+        if let activeOption = activeOption ?? pickable.allCases.first?.description,
+           let i = options.firstIndex(of: activeOption) {
             self.activeIndex = i
         }
     }
@@ -133,27 +133,32 @@ public extension Picker {
     static var indicatorCol: Int { 3 }
     static var textCol: Int { 5 }
 
-    @discardableResult mutating func setPrompt(_ text: String) -> Self {
+    @discardableResult
+    mutating func setPrompt(_ text: String) -> Self {
         prompt = text
         return self
     }
 
-    @discardableResult mutating func setContinue(text: String) -> Self {
+    @discardableResult
+    mutating func setContinue(text: String) -> Self {
         continueText = text
         return self
     }
 
-    @discardableResult mutating func setStyle(_ style: PickStyle) -> Self {
+    @discardableResult
+    mutating func setStyle(_ style: PickStyle) -> Self {
         styles = style
         return self
     }
 
-    @discardableResult mutating func setExtras(_ extras: Extras<Option>) -> Self {
+    @discardableResult
+    mutating func setExtras(_ extras: Extras<Option>) -> Self {
         self.extras = extras
         return self
     }
 
-    @discardableResult mutating func validate(when validation: @escaping Validate<Option>) -> Self {
+    @discardableResult
+    mutating func validate(when validation: @escaping Validate<Option>) -> Self {
         validate = validation
         return self
     }
@@ -257,14 +262,14 @@ public extension Picker {
         if !reRender { lines[option] = readCursorPos().row + 1 }
 
         guard let line = lines[option] else {
-            fatalError("Failed to find \(option.rawValue) in options list")
+            fatalError("Failed to find \(option) in options list")
         }
         let isActive = option == activeOption
         let isSelected = isMultipleChoice ? selectedOptions.contains(option) : isActive
 
         let checkIndicator = styles.checkIndicator(isSelected)
 
-        var text = styles.text(option.rawValue, isActive)
+        var text = styles.text(String(option), isActive)
 
         extras[option]?.mutate(&text)
 

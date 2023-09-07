@@ -51,7 +51,7 @@ public protocol Pickable: RawRepresentable, CaseIterable, Hashable, CustomString
     var suffix: String { get }
 
     /// Creates a `Pick` from the `Pickable` enumeration
-    static var pick: Pick<Self> { get set } // needs a setter because invocation is mutable
+    static var pick: Pick<RawValue> { get set } // needs a setter because invocation is mutable
 }
 
 public extension Pickable {
@@ -62,8 +62,9 @@ public extension Pickable {
     /// Creates a `Pick` from this enumeration.
     /// After customization is complete, invoke to display
     /// the options to the user and collect input.
-    static var pick: Pick<Self> {
+    static var pick: Pick<RawValue> {
         get { Pick(Self.self) }
+        @available(*, unavailable, message: "This property is read only")
         set {}
     }
 
@@ -72,5 +73,12 @@ public extension Pickable {
         var value = rawValue
         PickerOptionExtras(self).mutate(&value)
         return value
+    }
+}
+
+public extension Sequence where Element: StringProtocol {
+
+    func pick(withPrompt prompt: String) -> Pick<Element> {
+        Pick<Element>(prompt: prompt, options: Array(self))
     }
 }

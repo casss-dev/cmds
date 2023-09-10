@@ -37,15 +37,40 @@ public struct CMDS {
         }
     }
 
-    /// Prints the result of the execution block
-    @discardableResult public func callAsFunction() -> ShellResult {
-        switch result {
-        case .success(let output):
-            print(style.stdOutStyle(output))
-        case .failure(let error):
-            print(style.stdErrorStyle(error.message), to: &STDErrorOut.default)
+    /// Returns the result of stdout stylized
+    public var stdout: String { style.stdOutStyle((try? result.get()) ?? "") }
+
+    /// Returns the result of stderr stylized
+    public var stderr: String {
+        var out = ""
+        if case .failure(let error) = result {
+            out = error.message
         }
-        return result
+        return style.stdErrorStyle(out)
+    }
+
+    /// Returns stylized output
+    public var output: String {
+        switch result {
+            case .success:
+                return stdout
+            case .failure:
+                return stdout
+        }
+    }
+
+    /// Returns the result of the execution block
+    @discardableResult
+    public func callAsFunction() -> ShellResult { result }
+
+    /// Prints the result with the set style
+    public func print() {
+        switch callAsFunction() {
+        case .success(let output):
+            Swift.print(style.stdOutStyle(output))
+        case .failure(let error):
+            Swift.print(style.stdErrorStyle(error.message), to: &STDErrorOut.default)
+        }
     }
 }
 

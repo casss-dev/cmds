@@ -58,9 +58,26 @@ public struct MultiPick<Option: StringProtocol>: Picker {
     /// - Parameter max: The number of choices the user can select.
     /// If nil, the maximum amount of choices will be equal to the number of options
     /// - Returns: `self`
-    @discardableResult public mutating func multiChoice(max: Int? = nil) -> Self {
+    @discardableResult
+    public mutating func multiChoice(max: Int? = nil) -> Self {
         if let max { maxChoice = [max, options.count].max()! }
         else { maxChoice = options.count }
+        return self
+    }
+
+    /// Selects all of the provided indices. If no indices are provided, selects every option.
+    /// - Parameter indices: The indices to select (default: `[]`)
+    /// - Returns: `self`
+    @discardableResult
+    public mutating func selectingAll(indices: [Int] = []) -> Self {
+        guard !indices.isEmpty else {
+            selectedOptions = options
+            return self
+        }
+        selectedOptions = options
+            .enumerated()
+            .filter({ indices.contains($0.offset) })
+            .map(\.element)
         return self
     }
 
